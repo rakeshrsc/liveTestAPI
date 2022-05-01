@@ -14,8 +14,8 @@ import java.util.List;
 @EnableScheduling
 public class EventLogScheduler {
 
-    private Long totalCount =0l;
-    private List<Integer> idList = new ArrayList<Integer>();
+    private Long totalCount =0L;
+    private List<Integer> idList = new ArrayList<>();
 
     public Long getTotalCount() {
         return totalCount;
@@ -29,19 +29,21 @@ public class EventLogScheduler {
         return idList;
     }
 
-    public void setIdList(List<Integer> idList) {
-        this.idList = idList;
-    }
-
     public void addToIdList(Integer id) {
         this.idList.add(id);
     }
 
+    /**
+     * Clear values after 1 min
+     */
     private void clearValues() {
-        setTotalCount(0l);
+        setTotalCount(0L);
         this.idList.clear();
     }
 
+    /**
+     * Scheduler which logs requests count every 1 min.
+     */
     @Scheduled(cron = "1 * * * * *")
     public void logRequest() {
         log.info("Total number of requests: " + getTotalCount());

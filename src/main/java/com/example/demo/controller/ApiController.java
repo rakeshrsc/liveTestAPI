@@ -37,24 +37,32 @@ public class ApiController {
         this.restTemplate = restTemplateBuilder.build();
     }
 
+    /**
+     * REST service to accept GET endpoint.
+     * @param id - Mandatory id needed for processing.
+     * @param endpoint - Optional endpoint which will create a post request if present.
+     * @param request - Http request received.
+     * @return - Response entity with status code and message.
+     */
     @GetMapping(value = {"/smaato/accept"})
-    public ResponseEntity<?> acceptRequest(@RequestParam("id") Integer id, @RequestParam("endpoint") Optional<String> endpoint, WebRequest request)
+    public ResponseEntity<?> acceptRequest(@RequestParam("id") Integer id, @RequestParam(required = false) String endpoint, WebRequest request)
     {
-        ResponseEntity<?> result = null;
+        ResponseEntity<?> result;
         try {
             if (id == null) {
                 result = new ResponseEntity<>(new ApiResponse("400", "failed"), HttpStatus.BAD_REQUEST);
             } else {
                 if(!taskScheduler.getIdList().contains(id)) {
                     taskScheduler.addToIdList(id);
-                    taskScheduler.setTotalCount(taskScheduler.getTotalCount() + 1l);
+                    taskScheduler.setTotalCount(taskScheduler.getTotalCount() + 1L);
                 }
                 result = new ResponseEntity<>(new ApiResponse("200", "ok"), HttpStatus.OK);
-                if(endpoint.isPresent()) {
+                /* Endpoint format should be /api/smaato */
+                if(endpoint != null && !endpoint.isEmpty()) {
                     String reqUri = ((ServletWebRequest)request).getRequest().getRequestURI();
                     String reqUrl = ((ServletWebRequest)request).getRequest().getRequestURL().toString();
                     String baseUrl = reqUrl.replace(reqUri, "");
-                    this.restTemplate.postForObject(baseUrl + endpoint.get(), taskScheduler.getTotalCount(), ApiResponse.class);
+                    this.restTemplate.postForObject(baseUrl + endpoint, taskScheduler.getTotalCount(), ApiResponse.class);
                     return result;
                 }
             }
@@ -65,9 +73,14 @@ public class ApiController {
         return  result;
     }
 
-    @PostMapping(value = "/smaato/post")
+    /**
+     * REST service to accept POST endpoint.
+     * @param count - Count of request made in 1min.
+     * @return - Response entity with status code and message.
+     */
+    @PostMapping(value = "/smaato/*")
     public ResponseEntity<?> postRequest(@RequestBody Integer count) {
-        ResponseEntity<?> result = null;
+        ResponseEntity<?> result;
         try {
             result = new ResponseEntity<>(new ApiResponse("200", "ok"), HttpStatus.OK);
             log.info("Endpoint post method is called with count: " + count);
